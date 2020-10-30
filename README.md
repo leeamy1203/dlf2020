@@ -7,16 +7,12 @@ Most idea pulled from [Cookiecutter Data Science](https://drivendata.github.io/c
 
 ### app.py
 Main command line interface to run each step of the ML pipeline
-
 ### data
 Where data lives
-
 ### notebook
 Any jupyter notebook should be placed here
-
 ### metrics
 Any output of metrics (MSE..etc) should be saved under here as a csv
-
 ### src
 All code. Here's the breakdown per folder within src.
 #### conf
@@ -27,7 +23,6 @@ All code related to data preprocessing to create a trainable data
 All code related to modeling and traning
 #### validate
 All code related to validating the model 
-
 
 ## Pipeline
 
