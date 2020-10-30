@@ -55,6 +55,7 @@ Utilize one of these implemented transformer in pytorch and tweak it to meet our
 
 ### Tweaks
 Here's a breakdown of what needs to be tweaked from traditional transformer. 
+
 #### Simplify Encoder Step
 Because we aren't using sentences, the encoder step can be much simplified. There's no need for MHA and positional encoder since these layers 
 try to understand the relationship of words within the sentences. 
@@ -65,11 +66,21 @@ try to understand the relationship of words within the sentences.
 Similar to a "period" to mark the end. The Progressive Transformer has a Counter that is also learned as part of the output. 
 No mention of how this loss is computed but perhaps should be a straightforward distance calculation as well. 
 
-#### Input tweaks
-Add a word embedding step to vectorize the word and use that as the input instead of the word itself. This is to deal with Out-of-Bag vocabulary problem.
-There are pretrained vectors
+#### Input tweaks - Embeddings
+To deal with out-of-vocabulary word, we can use word or character embedding.
+There are pretrained modesl we can find
+##### Word embedding
  - https://medium.com/@martinpella/how-to-use-pre-trained-word-embeddings-in-pytorch-71ca59249f76
  - https://towardsdatascience.com/deep-learning-for-nlp-with-pytorch-and-torchtext-4f92d69052f
+ - https://pytorchnlp.readthedocs.io/en/latest/source/torchnlp.word_to_vector.html
+ - fasttext by facebook ai 
+   - https://github.com/facebookresearch/fastText?utm_source=catalyzex.com
+   - https://fasttext.cc/docs/en/english-vectors.html
+#### Character embedding
+While one of the pretrained word embedding encompass a lot of words, there can still be OOV problems. Character embedding can be used to get rid of
+oov problems commpletely. Perhaps we should do a combination of word and character embedding
+ - https://towardsdatascience.com/besides-word-embedding-why-you-need-to-know-character-embedding-6096a34a3b10
+ - https://github.com/makcedward/nlp/blob/master/sample/nlp-character_embedding.ipynb
 
 #### Computing Loss for Generator
 Compute **MSE** after applying **DTW**. Utilize the code written by "Words are Our Glosses". See [wacv2020/modeling.py](https://github.com/gopeith/SignLanguageProcessing/blob/master/wacv2020/modeling.py)
