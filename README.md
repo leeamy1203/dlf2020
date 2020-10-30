@@ -9,7 +9,7 @@ Most idea pulled from [Cookiecutter Data Science](https://drivendata.github.io/c
 Main command line interface to run each step of the ML pipeline
 
 ### data
-Where data artifacts live
+Where data lives
 
 ### notebook
 Any jupyter notebook should be placed here
@@ -53,22 +53,23 @@ Utilize one of these implemented transformer in pytorch and tweak it to meet our
  - http://nlp.seas.harvard.edu/2018/04/03/attention.html
  - https://towardsdatascience.com/how-to-code-the-transformer-in-pytorch-24db27c8f9ec
 
-### Tweaks
+#### Transformer Tweaks - Progressive Transformer
 Here's a breakdown of what needs to be tweaked from traditional transformer. 
 
-#### Simplify Encoder Step
+##### Simplify Encoder Step
 Because we aren't using sentences, the encoder step can be much simplified. There's no need for MHA and positional encoder since these layers 
 try to understand the relationship of words within the sentences. 
  - Instead of words ->  MHA -> Linear Normalization -> Feed Forward (Linear + ReLU + Linear) -> Linear Normalization  
  - Implement word -> Feed Forward -> Linear Normalization 
 
-#### Add Counter Embedding
+##### Add Counter Embedding
 Similar to a "period" to mark the end. The Progressive Transformer has a Counter that is also learned as part of the output. 
 No mention of how this loss is computed but perhaps should be a straightforward distance calculation as well. 
 
 #### Input tweaks - Embeddings
 To deal with out-of-vocabulary word, we can use word or character embedding.
 There are pretrained modesl we can find
+
 ##### Word embedding
  - https://medium.com/@martinpella/how-to-use-pre-trained-word-embeddings-in-pytorch-71ca59249f76
  - https://towardsdatascience.com/deep-learning-for-nlp-with-pytorch-and-torchtext-4f92d69052f
@@ -76,7 +77,7 @@ There are pretrained modesl we can find
  - fasttext by facebook ai 
    - https://github.com/facebookresearch/fastText?utm_source=catalyzex.com
    - https://fasttext.cc/docs/en/english-vectors.html
-#### Character embedding
+##### Character embedding
 While one of the pretrained word embedding encompass a lot of words, there can still be OOV problems. Character embedding can be used to get rid of
 oov problems commpletely. Perhaps we should do a combination of word and character embedding
  - https://towardsdatascience.com/besides-word-embedding-why-you-need-to-know-character-embedding-6096a34a3b10
