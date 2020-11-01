@@ -1,9 +1,4 @@
 # Typical Data Formats
-**/*.json
-**/*.csv
-**/*.pkl
-**/*.h5
-**/*.npy
 
 # User-specific stuff
 .idea/**/workspace.xml

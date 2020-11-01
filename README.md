@@ -1,12 +1,45 @@
 # dlf2020
 The goal of the project is to use deep neural network to translate spoken language to American SignLanguage (ASL) in the form of continuous 3D skeletal poses. For a given English word, we will be outputting a stream of skeletal poses (x, y, and z coordinates) representing ASL signs for the upper body which includes the torso, arms, hands and facial key points
 
+## Setup
+Use virtual env (used python 3.8.6). Install dependencies with 
+```
+pip3 install -r requirements.txt
+```
+Add virtual env to jupyter notebook
+```
+python -m ipykernel install --user --name=your_virtual_env
+jupyter notebook --port=your_port_number
+```
+Remember to activate environment to install libraries
+```
+pynev shell your_virtual_env
+```
+
+### Notebook setup
+Leverage the following code snippet to use the src directory in notebooks
+```python
+import sys
+# This should navigate to the repository root
+sys.path.append('../')
+%reload_ext autoreload
+%autoreload 2
+```
 
 ## Project Structure
 Most idea pulled from [Cookiecutter Data Science](https://drivendata.github.io/cookiecutter-data-science/#directory-structure)
 
 ### app.py
 Main command line interface to run each step of the ML pipeline
+ - Create and save word labels and embeddings by running
+   ```python 
+   python app.py data
+   ```
+   This will create embeddings.pkl and words.pkl in the data/interim folder which contains 2000 entries of the WLASL words.
+   See data/preprocessor.py for more details
+  
+
+
 ### data
 Where data lives
 ### notebook

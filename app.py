@@ -1,7 +1,7 @@
 import logging
 import click
 
-
+from src.data.preprocsesor import create_trainable
 logger = logging.getLogger(__name__)
 
 
@@ -13,7 +13,7 @@ def cli():
 @cli.command()
 def data():
     # code to create trainable data
-    pass
+    create_trainable()
     
 
 if __name__ == '__main__':
