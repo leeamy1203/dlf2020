@@ -43,8 +43,11 @@ def loadData(dname):
   for fname in fnames:
     p = re.search(r"([^\\/]+)_(\d+)_keypoints\.json$", fname)
     
-    with open(fname) as json_data:
-      data = json.load(json_data)
+    try:
+        with open(fname) as json_data:
+          data = json.load(json_data)
+    except:
+        continue
     if len(data["people"]) == 0:
       continue
       
