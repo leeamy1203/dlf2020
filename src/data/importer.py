@@ -24,5 +24,3 @@ def get_wlasl_words() -> np.ndarray:
     return words
 
     
-    
-

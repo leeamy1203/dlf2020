@@ -1,5 +1,5 @@
 from torch import nn
-from src.transformer.layers import LayerNorm, SublayerConnection
+from src.transformer.layers import LayerNorm, SublayerConnection, PositionalEncoding
 from src.transformer.util import clones
 from torch.functional import F
 
@@ -18,7 +18,7 @@ class Encoder(nn.Module):
     def forward(self, x, mask):
         "Pass the input (and mask) through each layer in turn."
         for layer in self.layers:
-            x = layer(x, mask)
+            x = layer(x)
         return self.norm(x)
     
     
@@ -44,14 +44,16 @@ class Decoder(nn.Module):
     N layer decoder with masking. N = 6
     """
     
-    def __init__(self, layer, n=6):
+    def __init__(self, layer, position_enc, n=6):
         super(Decoder, self).__init__()
         self.layers = clones(layer, n)
         self.norm = LayerNorm(layer.size)
+        self.position_enc = position_enc
     
     def forward(self, x, memory, src_mask, tgt_mask):
+        dec_output = self.position_enc(x)
         for layer in self.layers:
-            x = layer(x, memory, src_mask, tgt_mask)
+            x = layer(dec_output, memory, src_mask, tgt_mask)
         return self.norm(x)
 
 
@@ -82,12 +84,10 @@ class EncoderDecoder(nn.Module):
     other models.
     """
     
-    def __init__(self, encoder, decoder, src_embed, tgt_embed, generator):
+    def __init__(self, encoder, decoder, generator):
         super(EncoderDecoder, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
-        self.src_embed = src_embed
-        self.tgt_embed = tgt_embed
         self.generator = generator
     
     def forward(self, src, tgt, src_mask, tgt_mask):
@@ -96,19 +96,20 @@ class EncoderDecoder(nn.Module):
                            tgt, tgt_mask)
     
     def encode(self, src, src_mask):
-        return self.encoder(self.src_embed(src), src_mask)
+        return self.encoder(src, src_mask)
     
     def decode(self, memory, src_mask, tgt, tgt_mask):
-        return self.decoder(self.tgt_embed(tgt), memory, src_mask, tgt_mask)
+        return self.decoder(tgt, memory, src_mask, tgt_mask)
 
 
 class Generator(nn.Module):
     """
     Define standard linear generation step. No need for softamx at the end
     """
-    def __init__(self, d_model, vocab):
+    def __init__(self, d_model, output):
         super(Generator, self).__init__()
-        self.proj = nn.Linear(d_model, vocab)
+        self.proj = nn.Linear(d_model, output)
 
     def forward(self, x):
         return F.log_softmax(self.proj(x), dim=-1)
+    

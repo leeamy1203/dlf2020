@@ -1,8 +1,7 @@
-import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
-import math, copy. time
+import math
 from torch.autograd import Variable
 
 
@@ -105,8 +104,7 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pe', pe)
     
     def forward(self, x):
-        x = x + Variable(self.pe[:, :x.size(1)],
-                         requires_grad=False)
+        x = x + Variable(self.pe[:, :x.size(1)], requires_grad=False)
         return self.dropout(x)
     
     
@@ -114,23 +112,27 @@ class MultiHeadAttention(nn.Module):
     """
     Multi-Head Attention module
     From: https://github.com/jadore801120/attention-is-all-you-need-pytorch/blob/master/transformer/SubLayers.py
+    and http://nlp.seas.harvard.edu/2018/04/03/attention.html#full-model
+    
     
     
     """
 
-    def __init__(self, n_head, d_model, d_k, d_v):
+    def __init__(self, n_head, d_model):
         super().__init__()
 
         self.n_head = n_head
-        self.d_k = d_k
-        self.d_v = d_v
+        self.d_model = d_model
+        # making an assumption that key and value have same dimension
+        self.d_k = d_model // n_head
+        self.d_v = self.d_k
 
-        self.w_qs = nn.Linear(d_model, n_head * d_k, bias=False)
-        self.w_ks = nn.Linear(d_model, n_head * d_k, bias=False)
-        self.w_vs = nn.Linear(d_model, n_head * d_v, bias=False)
-        self.fc = nn.Linear(n_head * d_v, d_model, bias=False)
+        self.w_qs = nn.Linear(d_model, d_model, bias=False)
+        self.w_ks = nn.Linear(d_model, d_model, bias=False)
+        self.w_vs = nn.Linear(d_model, d_model, bias=False)
+        self.fc = nn.Linear(d_model, d_model, bias=False)
 
-        self.attention = ScaledDotProductAttention(temperature=d_k ** 0.5)
+        self.attention = ScaledDotProductAttention(temperature=self.d_v ** 0.5)
 
     def forward(self, q, k, v, mask=None):
 
@@ -141,9 +143,9 @@ class MultiHeadAttention(nn.Module):
 
         # Pass through the pre-attention projection: b x lq x (n*dv)
         # Separate different heads: b x lq x n x dv
-        q = self.w_qs(q).view(sz_b, len_q, n_head, d_k)
-        k = self.w_ks(k).view(sz_b, len_k, n_head, d_k)
-        v = self.w_vs(v).view(sz_b, len_v, n_head, d_v)
+        q = self.w_qs(q).view(sz_b, -1, n_head, d_k)
+        k = self.w_ks(k).view(sz_b, -1, n_head, d_k)
+        v = self.w_vs(v).view(sz_b, -1, n_head, d_v)
 
         # Transpose for attention dot product: b x n x lq x dv
         q, k, v = q.transpose(1, 2), k.transpose(1, 2), v.transpose(1, 2)
@@ -155,11 +157,5 @@ class MultiHeadAttention(nn.Module):
 
         # Transpose to move the head dimension back: b x lq x n x dv
         # Combine the last two dimensions to concatenate all the heads together: b x lq x (n*dv)
-        q = q.transpose(1, 2).contiguous().view(sz_b, len_q, -1)
+        q = q.transpose(1, 2).contiguous().view(sz_b, -1, self.d_model)
         return self.fc(q)
-    
-    
-
-    
-    
-    
