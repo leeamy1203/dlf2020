@@ -69,9 +69,7 @@ class ScaledDotProductAttention(nn.Module):
         self.dropout = nn.Dropout(attn_dropout)
 
     def forward(self, q, k, v, mask=None):
-
         attn = torch.matmul(q / self.temperature, k.transpose(2, 3))
-
         if mask is not None:
             attn = attn.masked_fill(mask == 0, -1e9)
 
@@ -140,7 +138,6 @@ class MultiHeadAttention(nn.Module):
         sz_b, len_q, len_k, len_v = q.size(0), q.size(1), k.size(1), v.size(1)
 
         residual = q
-
         # Pass through the pre-attention projection: b x lq x (n*dv)
         # Separate different heads: b x lq x n x dv
         q = self.w_qs(q).view(sz_b, -1, n_head, d_k)

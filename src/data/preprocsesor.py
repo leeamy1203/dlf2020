@@ -250,10 +250,40 @@ def parse_important_skeleton_data(frame_data: dict):
     return body + left_hand + right_hand + face
     
     
+def _normalize_data(skeleton_arr: np.ndarray) -> np.ndarray:
+    points = skeleton_arr.shape[-1]
+    Xx = skeleton_arr[:, 0:points:2]
+    Xy = skeleton_arr[:, 1:points:2]
+    Xx, Xy = pose2D.normalization(Xx, Xy)
+    skeleton_arr[:, 0:points:2] = Xx
+    skeleton_arr[:, 1:points:2] = Xy
+    return skeleton_arr
+
+
+def _pad_data(skeleton_arr: np.ndarray) -> np.ndarray:
+    """
+    Since decoder is a autoregressive, need to pad the first row as 0s to signify a <start> token.
+    """
+    padded_data = np.zeros((skeleton_arr.shape[0] + 1, skeleton_arr.shape[1]))
+    padded_data[1:] = skeleton_arr
+    return padded_data
+
+
+def _add_position_encoding(skeleton_arr: np.ndarray, total_frame_cnt: int) -> np.ndarray:
+    """
+    Add position encoding element per frame
+    """
+    with_encoding = np.zeros((skeleton_arr.shape[0], skeleton_arr.shape[1] + 1))
+    with_encoding[:, 0:skeleton_arr.shape[1]] = skeleton_arr
+    
+    position_encoding = np.arange(0, skeleton_arr.shape[0], 1).astype('float') / total_frame_cnt
+    with_encoding[:, -1] = position_encoding
+    return with_encoding
+
+    
 def create_2d_dataset():
     """
     creates a list of dictionary
-     {
     """
     # list of dictionary {"video_id": str, "frame_cnt": int, "skeletons": [[]]}
     with open(os.path.join(DATA_DIR, 'meta', 'video_id_to_word.json'), 'r') as f:
@@ -293,14 +323,12 @@ def create_2d_dataset():
             except Exception as e:
                 logger.error("error while grabbing = {}".format(os.path.join(video_dir, frame_name)))
                 logger.error(e)
-        if len(video_data["skeletons"]) > 10:
+                
+        if len(video_data["skeletons"]) > 10:  # arbitrary number check to signify enough frames.
             video_data["skeletons"] = np.array(video_data["skeletons"])
-            points = video_data["skeletons"].shape[-1]
-            Xx = video_data["skeletons"][:, 0:points:2]
-            Xy = video_data["skeletons"][:, 1:points:2]
-            Xx, Xy = pose2D.normalization(Xx, Xy)
-            video_data["skeletons"][:, 0:points:2] = Xx
-            video_data["skeletons"][:, 1:points:2] = Xy
+            video_data["skeletons"] = _normalize_data(video_data["skeletons"])
+            video_data["skeletons"] = _pad_data(video_data["skeletons"])
+            video_data["skeletons"] = _add_position_encoding(video_data["skeletons"], total_frame_cnt)
             video_data["frame_cnt"] = total_frame_cnt
             data.append(video_data)
     with open(os.path.join(DATA_DIR, 'interim', '2dskeleton.pkl'), 'wb') as output:
@@ -320,6 +348,22 @@ def create_video_id_mapping():
     with open(os.path.join(DATA_DIR, 'meta', 'video_id_to_word.json'), 'w') as output:
         json.dump(video_dict, output)
         
+        
+def create_word_embedding_map():
+    with open(os.path.join(DATA_DIR, 'interim', 'words.pkl'), 'rb') as f:
+        words = list(pickle.load(f))
+    with open(os.path.join(DATA_DIR, 'interim', 'embeddings.pkl'), 'rb') as f:
+        embeddings = pickle.load(f)
+        
+    mapper = {}
+    for i, w in enumerate(words):
+        mapper[w] = embeddings[i]
+    
+    with open(os.path.join(DATA_DIR, 'meta', 'word_to_embedding.pkl'), 'wb') as output:
+        pickle.dump(mapper, output)
+        
+    
+
         
         
         
