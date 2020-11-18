@@ -25,7 +25,7 @@ PAD_NUM = 100
 logger = logging.getLogger(__name__)
 
 
-def create_transformer(n: int = 6,
+def create_transformer(n: int = 2,
                        input_size: int = 300,
                        hidden_size: int = 2048,
                        h: int = 10,
@@ -74,15 +74,16 @@ def train(input_size: int = 300,
     """
     Define and train the transformer
     """
-    torch.set_default_tensor_type('torch.FloatTensor')
     if torch.cuda.is_available():
         device = 'cuda'
 
     # get data
     with open(os.path.join(DATA_DIR, 'interim', '2dskeleton.pkl'), 'rb') as f:
         data = pickle.load(f)
+    data = data[0:10]
 
     train_data = get_dataloader(data, batch_size=batch_size)
+    eval_data = get_dataloader(data, batch_size=batch_size)
     
     transformer = create_transformer()
     
@@ -100,8 +101,9 @@ def train(input_size: int = 300,
     for epoch_i in range(epochs):
         logger.info(f"Epoch = {epoch_i}")
         train_loss = train_epoch(transformer, train_data, loss, optimizer, device)
-        logger.info(f"loss: {train_loss / len(train)}")
-        training_loss.append([epoch_i, train_loss / len(train)])
+        logger.info(f"loss: {train_loss / len(data)}")
+        training_loss.append([epoch_i, train_loss / len(data)])
+        eval_epoch(transformer, eval_data)
     torch.save(transformer.state_dict(), os.path.join(MODEL_DIR, 'model_weights.pt'))
     
     
@@ -146,13 +148,35 @@ def train_epoch(model: nn.Module,
         optimizer.step_and_update_lr()
         total_loss += loss
     return total_loss.detach().numpy()
-    
-    
-def make_std_mask(tgt, pad):
-    "Create a mask to hide padding and future words."
-    tgt_mask = (tgt != pad).unsqueeze(-2)
-    tgt_mask = tgt_mask & Variable(subsequent_mask(tgt.size(-1)).type_as(tgt_mask.data))
-    return tgt_mask
+
+
+def eval_epoch(model, validation_data, device='cpu'):
+    ''' Epoch operation in evaluation phase '''
+
+    model.eval()
+    desc = '  - (Validation) '
+    with torch.no_grad():
+        all_loss = 0
+        for batch in tqdm(validation_data, mininterval=2, desc=desc, leave=False):
+            src = batch['src'].to(device)
+            trg = batch["trg"].to(device)
+            frame_cnt = trg.shape[1]
+            decoder_input = torch.zeros((1, 300)).unsqueeze(0).to(device)
+            total_loss = 0
+            for i in range(frame_cnt - 1):
+                pred = model(src, decoder_input, None, None)
+                actual = trg[0][1:i+2].unsqueeze(0)
+                
+                skeleton_pred = pred[:, :, 0:240].contiguous().view(-1)
+                skeleton_actual = actual[:, :, 0:240].contiguous().view(-1)
+                padding_mask = skeleton_actual != PAD_NUM
+                loss = nn.functional.mse_loss(skeleton_pred[padding_mask].float(),
+                                              skeleton_actual[padding_mask].float())
+                last_pred = pred[:, -1].unsqueeze(0)
+                decoder_input = torch.cat((decoder_input, last_pred), 1)
+                total_loss += loss.item()
+            all_loss += total_loss / frame_cnt
+    return all_loss
 
 
 def get_subsequent_mask(seq, pad):
@@ -161,7 +185,7 @@ def get_subsequent_mask(seq, pad):
     len_b = seq.size()[0]
     subsequent_mask = (1 - torch.triu(
         torch.ones((len_b, len_s, len_s), device=seq.device), diagonal=1)).bool()
-    find_padding = seq[:,:,0] != pad
+    find_padding = seq[:, :, 0] != pad
     for i in range(subsequent_mask.shape[0]):
         pad_mask = np.multiply(find_padding[i][np.newaxis, :],
                                find_padding[i][:, np.newaxis]).bool()
@@ -169,11 +193,6 @@ def get_subsequent_mask(seq, pad):
     return subsequent_mask
 
 
-def subsequent_mask(size):
-    "Mask out subsequent positions."
-    attn_shape = (1, size, size)
-    subsequent_mask = np.triu(np.ones(attn_shape), k=1).astype('uint8')
-    return torch.from_numpy(subsequent_mask) == 0
     
     
 def get_dataloader(data,

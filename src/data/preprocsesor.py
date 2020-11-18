@@ -116,7 +116,7 @@ def create_h5_from_openpose():
     """
     
     openpose_dir = os.path.join(DATA_DIR, 'raw', 'openpose')
-    for video_id in os.listdir(openpose_dir):
+    for video_id in tqdm(os.listdir(openpose_dir)):
         h5_name = os.path.join(DATA_DIR, 'raw', 'h5', f"{video_id}.h5")
         if os.path.isfile(h5_name):
             continue

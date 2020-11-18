@@ -50,7 +50,7 @@ def create_training_data_json():
     
 @cli.command()
 def train_transformer():
-    train(batch_size=32, epochs=2)
+    train(batch_size=4, epochs=2)
     
     
 @cli.command()

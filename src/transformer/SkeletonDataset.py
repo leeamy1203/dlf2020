@@ -30,7 +30,7 @@ class SkeletonDataset(Dataset):
             idx = idx.tolist()
         data = self.data[idx]
         skeletons = self.pad_data(data['skeletons'])
-        data["src"] = data.pop("embedding")
-        data["trg"] = skeletons
-        data.pop('skeletons')
-        return data
+        output = dict()
+        output["src"] = data["embedding"]
+        output["trg"] = skeletons
+        return output
