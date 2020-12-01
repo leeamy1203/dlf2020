@@ -116,11 +116,13 @@ Compute **MSE** after applying **DTW**. Utilize the code written by "Words are O
 
 
 ### Discriminator
-Need to read about Conditioanl GAN and the "Adversarial Training for Multi-Channel SLP" [paper](https://arxiv.org/pdf/2008.12405.pdf)
+Conditioanl GAN from the "Adversarial Training for Multi-Channel SLP" [paper](https://arxiv.org/pdf/2008.12405.pdf)
 
+### Back Translation
+Sign Language Transformers: Joint End-to-end Sign Language. Recognition and Translation [paper](https://arxiv.org/abs/2003.13830) [code](https://www.catalyzex.com/redirect?url=https://github.com/neccam/slt)
 
-
-
+### Data
+Trainable data available: https://drive.google.com/file/d/1-6b7_Rsum_fHTN4kKEUeR5Y3bJ0z76jd/view
 
 
 
